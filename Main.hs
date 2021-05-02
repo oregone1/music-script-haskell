@@ -35,23 +35,23 @@ getInput options = do
       recursivePrint options (control + 1)
     recursivePrint [] control = return ()
 
+handleInput "" _ = do
+  callCommand "clear"
+  current_path  <- getCurrentDirectory
+  let split_dir =  splitOn "/" current_path
+  setCurrentDirectory (intercalate "/" (init split_dir))
 handleInput input options = do
   callCommand "clear"
-  if null input then do
-    current_path  <- getCurrentDirectory
-    let split_dir =  splitOn "/" current_path
-    setCurrentDirectory (intercalate "/" (init split_dir))
-  else
-    case readMaybe input :: Maybe Int of
-      Just input -> do print input ; setCurrentDirectory (options!!input)
-      Nothing    -> do checkInput input
-    where
-      checkInput :: String -> IO ()
-      checkInput input | head (splitOn "play" input)     == "" = do play (splitOn "," (splitOn "play" input!!1)) -- oh god this is (less awful than it was) awful
-                       | head (splitOn "file" input)     == "" = do file (splitOn "file" input!!1)
-                       | head (splitOn "del"  input)     == "" = do dele (splitOn "del"  input!!1)
-                       | head (splitOn "download" input) == "" = do download (splitOn "," (splitOn "download" input!!1))
-                       | otherwise                             = do putStrLn "if you see this you did something wrong"
+  case readMaybe input :: Maybe Int of
+    Just input -> do print input ; setCurrentDirectory (options!!input)
+    Nothing    -> do checkInput input
+  where
+    checkInput :: String -> IO ()
+    checkInput input | head (splitOn "play" input)     == "" = do play (splitOn "," (splitOn "play" input!!1)) -- oh god this is (less awful than it was) awful
+                     | head (splitOn "file" input)     == "" = do file (splitOn "file" input!!1)
+                     | head (splitOn "del"  input)     == "" = do dele (splitOn "del"  input!!1)
+                     | head (splitOn "download" input) == "" = do download (splitOn "," (splitOn "download" input!!1))
+                     | otherwise                             = do putStrLn "if you see this you did something wrong"
 
 play [] = return ()
 play (file:files) = do
@@ -61,9 +61,8 @@ play (file:files) = do
   play files
 
 file fileName = do
-  let newName   = splitOn " " (fileName ++ " ")
-  let finalName = intercalate "-" newName
-  callCommand ("mkdir \'" ++ tail (init finalName) ++ "\'")
+  let newName = splitOn " " (fileName ++ " ")
+  callCommand ("mkdir \'" ++ tail (init (intercalate "-" newName)) ++ "\'")
 
 dele fileName = do
   current_path <- getCurrentDirectory
